@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>نموذج تحريك مفاصل الناذل</title>
+    <style>
+        :root { --bg-color: #f0f0f0; }
+        body { margin: 0; overflow: hidden; background: var(--bg-color); font-family: sans-serif; }
+        
+        #game-container {
+            width: 100vw; height: 100vh;
+            position: relative;
+            background: #fff; /* هنا تضع صورة الخلفية */
+        }
+
+        /* تنسيق الأطراف كقطع منفصلة */
+        .bone-part {
+            position: absolute;
+            cursor: move;
+            user-select: none;
+            border: 2px dashed #ccc;
+            background: rgba(200, 200, 200, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* نقطة الارتكاز: مهمة جداً لجعل الدوران يبدو طبيعياً من المفصل */
+            transform-origin: top center; 
+        }
+
+        .bone-part:hover { border-color: #ff4500; background: rgba(255, 69, 0, 0.2); }
+
+        /* تعريف أحجام افتراضية للأجزاء */
+        #torso { width: 80px; height: 120px; top: 200px; left: 400px; transform-origin: center; }
+        #head { width: 50px; height: 50px; top: -55px; left: 15px; border-radius: 50%; }
+        #upper-arm-r { width: 30px; height: 70px; top: 10px; left: 85px; }
+        #lower-arm-r { width: 25px; height: 70px; top: 70px; left: 2px; }
+        #tray { width: 100px; height: 10px; top: 70px; left: -35px; background: #555; transform-origin: center; }
+
+        .label { font-size: 10px; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="torso" class="bone-part" data-rotation="0">
+        <span class="label">الجذع (Torso)</span>
+        
+        <div id="head" class="bone-part" data-rotation="0"><span class="label">رأس</span></div>
+        
+        <div id="upper-arm-r" class="bone-part" data-rotation="0">
+            <span class="label">عضد</span>
+            <div id="lower-arm-r" class="bone-part" data-rotation="0">
+                <span class="label">ساعد</span>
+                <div id="tray" class="bone-part" data-rotation="0"><span class="label">الصينية</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const parts = document.querySelectorAll('.bone-part');
+    let isDragging = false;
+    let currentPart = null;
+    let offset = { x: 0, y: 0 };
+
+    parts.forEach(part => {
+        // السحب والإفلات (Drag and Drop)
+        part.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+            isDragging = true;
+            currentPart = part;
+            offset.x = e.clientX - part.offsetLeft;
+            offset.y = e.clientY - part.offsetTop;
+        });
+
+        // التدوير باستخدام عجلة الماوس (Rotation)
+        part.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            let rot = parseInt(part.getAttribute('data-rotation')) || 0;
+            rot += e.deltaY > 0 ? 5 : -5;
+            part.setAttribute('data-rotation', rot);
+            // تطبيق الدوران مع الحفاظ على الهيكل
+            part.style.transform = `rotate(${rot}deg)`;
+        });
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (isDragging && currentPart) {
+            currentPart.style.left = (e.clientX - offset.x) + 'px';
+            currentPart.style.top = (e.clientY - offset.y) + 'px';
+        }
+    });
+
+    window.addEventListener('mouseup', () => {
+        isDragging = false;
+        currentPart = null;
+    });
+</script>
+
+</body>
+</html>
