@@ -1,102 +1,167 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <title>نموذج تحريك مفاصل الناذل</title>
-    <style>
-        :root { --bg-color: #f0f0f0; }
-        body { margin: 0; overflow: hidden; background: var(--bg-color); font-family: sans-serif; }
-        
-        #game-container {
-            width: 100vw; height: 100vh;
-            position: relative;
-            background: #fff; /* هنا تضع صورة الخلفية */
-        }
 
-        /* تنسيق الأطراف كقطع منفصلة */
-        .bone-part {
-            position: absolute;
-            cursor: move;
-            user-select: none;
-            border: 2px dashed #ccc;
-            background: rgba(200, 200, 200, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            /* نقطة الارتكاز: مهمة جداً لجعل الدوران يبدو طبيعياً من المفصل */
-            transform-origin: top center; 
-        }
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+#ow{padding:1rem 0;user-select:none;-webkit-user-select:none}
+#st{
+  position:relative;width:620px;height:570px;
+  background:var(--color-background-secondary);
+  border:0.5px solid var(--color-border-tertiary);
+  border-radius:var(--border-radius-lg);
+  overflow:visible;margin:0 auto
+}
+.pv{
+  position:absolute;width:0;height:0;
+  overflow:visible;transform-origin:0 0;
+  transform:rotate(0deg)
+}
+.bv{
+  position:absolute;border-radius:6px;cursor:pointer;
+  border:1.5px solid transparent;
+  display:flex;align-items:center;justify-content:center
+}
+.bv:hover{border-color:rgba(255,255,255,.6)}
+.bv.sel{border-color:#fff;border-width:2.5px}
+.bv .lb{
+  font-size:9px;font-weight:500;
+  color:rgba(255,255,255,.92);
+  pointer-events:none;text-align:center;
+  line-height:1;white-space:nowrap
+}
+.jd{
+  position:absolute;width:7px;height:7px;
+  border-radius:50%;background:rgba(255,255,255,.3);
+  border:1.5px solid rgba(255,255,255,.55);
+  left:-3.5px;top:-3.5px;pointer-events:none
+}
+.ct{background:#888780}.ch{background:#EF9F27}
+.cr{background:#639922}.cl{background:#7F77DD}
+.ctr{background:#85B7EB}.ccu{background:#185FA5}
+#bar{
+  max-width:620px;margin:9px auto 0;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 6px;gap:8px
+}
+#hint{font-size:12px;color:var(--color-text-secondary)}
+#binfo{display:flex;align-items:center;gap:8px}
+#sname{font-size:13px;font-weight:500;color:var(--color-text-primary)}
+#sdeg{font-size:12px;color:var(--color-text-secondary);font-variant-numeric:tabular-nums;min-width:32px}
+#rst{
+  font-size:12px;cursor:pointer;
+  color:var(--color-text-secondary);
+  border:0.5px solid var(--color-border-secondary);
+  border-radius:var(--border-radius-md);
+  padding:3px 10px;background:none
+}
+#rst:hover{background:var(--color-background-tertiary)}
+#legend{
+  max-width:620px;margin:6px auto 0;
+  display:flex;gap:14px;padding:0 6px;flex-wrap:wrap
+}
+.lgd{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--color-text-secondary)}
+.lgd-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+</style>
 
-        .bone-part:hover { border-color: #ff4500; background: rgba(255, 69, 0, 0.2); }
+<h2 class="sr-only">OsteoWaiter — 2D hierarchical bone rigging system with 14 interactive bones using forward kinematics</h2>
 
-        /* تعريف أحجام افتراضية للأجزاء */
-        #torso { width: 80px; height: 120px; top: 200px; left: 400px; transform-origin: center; }
-        #head { width: 50px; height: 50px; top: -55px; left: 15px; border-radius: 50%; }
-        #upper-arm-r { width: 30px; height: 70px; top: 10px; left: 85px; }
-        #lower-arm-r { width: 25px; height: 70px; top: 70px; left: 2px; }
-        #tray { width: 100px; height: 10px; top: 70px; left: -35px; background: #555; transform-origin: center; }
+<div id="ow">
+<div id="st">
 
-        .label { font-size: 10px; pointer-events: none; }
-    </style>
-</head>
-<body>
+<div class="pv" id="pp" data-n="Pelvis" style="left:260px;top:295px">
+  <div class="bv ct" data-p="pp" style="left:-42px;top:-18px;width:84px;height:36px;border-radius:10px"><span class="lb">Pelvis</span></div>
+  <div class="jd"></div>
 
-<div id="game-container">
-    <div id="torso" class="bone-part" data-rotation="0">
-        <span class="label">الجذع (Torso)</span>
-        
-        <div id="head" class="bone-part" data-rotation="0"><span class="label">رأس</span></div>
-        
-        <div id="upper-arm-r" class="bone-part" data-rotation="0">
-            <span class="label">عضد</span>
-            <div id="lower-arm-r" class="bone-part" data-rotation="0">
-                <span class="label">ساعد</span>
-                <div id="tray" class="bone-part" data-rotation="0"><span class="label">الصينية</span></div>
-            </div>
-        </div>
+  <div class="pv" id="pt" data-n="Torso" style="left:0;top:-18px">
+    <div class="bv ct" data-p="pt" style="left:-23px;top:-132px;width:46px;height:132px"><span class="lb">Torso</span></div>
+    <div class="jd"></div>
+
+    <div class="pv" id="pnk" data-n="Neck" style="left:0;top:-132px">
+      <div class="bv ch" data-p="pnk" style="left:-15px;top:-42px;width:30px;height:42px"><span class="lb">Neck</span></div>
+      <div class="jd"></div>
+      <div class="pv" id="phd" data-n="Head" style="left:0;top:-42px">
+        <div class="bv ch" data-p="phd" style="left:-30px;top:-60px;width:60px;height:60px;border-radius:50%"><span class="lb">Head</span></div>
+        <div class="jd"></div>
+      </div>
     </div>
+
+    <div class="pv" id="pru" data-n="R.Upper Arm" style="left:23px;top:-118px">
+      <div class="bv cr" data-p="pru" style="left:0;top:-10px;width:72px;height:20px"><span class="lb">R.Arm</span></div>
+      <div class="jd"></div>
+      <div class="pv" id="prl" data-n="R.Lower Arm" style="left:72px;top:0">
+        <div class="bv cr" data-p="prl" style="left:0;top:-8px;width:62px;height:16px"><span class="lb">R.Forearm</span></div>
+        <div class="jd"></div>
+        <div class="pv" id="prh" data-n="R.Hand" style="left:62px;top:0">
+          <div class="bv cr" data-p="prh" style="left:-3px;top:-24px;width:30px;height:48px;border-radius:7px"><span class="lb">R.Hand</span></div>
+          <div class="jd"></div>
+          <div class="pv" id="pry" data-n="Tray" style="left:28px;top:-10px">
+            <div class="bv ctr" data-p="pry" style="left:-34px;top:-11px;width:68px;height:11px;border-radius:3px"><span class="lb" style="font-size:8px">Tray</span></div>
+            <div class="jd"></div>
+            <div class="pv" id="pcu" data-n="Cup" style="left:0;top:-11px">
+              <div class="bv ccu" data-p="pcu" style="left:-9px;top:-28px;width:18px;height:28px;border-radius:3px 3px 7px 7px"><span class="lb" style="font-size:8px">Cup</span></div>
+              <div class="jd"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pv" id="plu" data-n="L.Upper Arm" style="left:-23px;top:-118px">
+      <div class="bv cl" data-p="plu" style="left:-72px;top:-10px;width:72px;height:20px"><span class="lb">L.Arm</span></div>
+      <div class="jd"></div>
+      <div class="pv" id="pll" data-n="L.Lower Arm" style="left:-72px;top:0">
+        <div class="bv cl" data-p="pll" style="left:-62px;top:-8px;width:62px;height:16px"><span class="lb">L.Forearm</span></div>
+        <div class="jd"></div>
+        <div class="pv" id="plh" data-n="L.Hand" style="left:-62px;top:0">
+          <div class="bv cl" data-p="plh" style="left:-27px;top:-24px;width:30px;height:48px;border-radius:7px"><span class="lb">L.Hand</span></div>
+          <div class="jd"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="pv" id="prug" data-n="R.Upper Leg" style="left:22px;top:18px">
+    <div class="bv cr" data-p="prug" style="left:-13px;top:0;width:26px;height:90px"><span class="lb">R.Thigh</span></div>
+    <div class="jd"></div>
+    <div class="pv" id="prlg" data-n="R.Lower Leg" style="left:0;top:90px">
+      <div class="bv cr" data-p="prlg" style="left:-11px;top:0;width:22px;height:82px"><span class="lb">R.Calf</span></div>
+      <div class="jd"></div>
+      <div class="pv" id="prft" data-n="R.Foot" style="left:0;top:82px">
+        <div class="bv cr" data-p="prft" style="left:0;top:-5px;width:44px;height:20px;border-radius:5px"><span class="lb">R.Foot</span></div>
+        <div class="jd"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pv" id="plug" data-n="L.Upper Leg" style="left:-22px;top:18px">
+    <div class="bv cl" data-p="plug" style="left:-13px;top:0;width:26px;height:90px"><span class="lb">L.Thigh</span></div>
+    <div class="jd"></div>
+    <div class="pv" id="pllg" data-n="L.Lower Leg" style="left:0;top:90px">
+      <div class="bv cl" data-p="pllg" style="left:-11px;top:0;width:22px;height:82px"><span class="lb">L.Calf</span></div>
+      <div class="jd"></div>
+      <div class="pv" id="plft" data-n="L.Foot" style="left:0;top:82px">
+        <div class="bv cl" data-p="plft" style="left:-44px;top:-5px;width:44px;height:20px;border-radius:5px"><span class="lb">L.Foot</span></div>
+        <div class="jd"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
 </div>
 
-<script>
-    const parts = document.querySelectorAll('.bone-part');
-    let isDragging = false;
-    let currentPart = null;
-    let offset = { x: 0, y: 0 };
-
-    parts.forEach(part => {
-        // السحب والإفلات (Drag and Drop)
-        part.addEventListener('mousedown', (e) => {
-            e.stopPropagation();
-            isDragging = true;
-            currentPart = part;
-            offset.x = e.clientX - part.offsetLeft;
-            offset.y = e.clientY - part.offsetTop;
-        });
-
-        // التدوير باستخدام عجلة الماوس (Rotation)
-        part.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            let rot = parseInt(part.getAttribute('data-rotation')) || 0;
-            rot += e.deltaY > 0 ? 5 : -5;
-            part.setAttribute('data-rotation', rot);
-            // تطبيق الدوران مع الحفاظ على الهيكل
-            part.style.transform = `rotate(${rot}deg)`;
-        });
-    });
-
-    window.addEventListener('mousemove', (e) => {
-        if (isDragging && currentPart) {
-            currentPart.style.left = (e.clientX - offset.x) + 'px';
-            currentPart.style.top = (e.clientY - offset.y) + 'px';
-        }
-    });
-
-    window.addEventListener('mouseup', () => {
-        isDragging = false;
-        currentPart = null;
-    });
-</script>
-
-</body>
-</html>
+<div id="bar">
+  <span id="hint">Scroll wheel to rotate · Drag to pose · Drag pelvis to translate</span>
+  <div id="binfo">
+    <span id="sname">— click a bone —</span>
+    <span id="sdeg"></span>
+    <button id="rst">Reset pose</button>
+  </div>
+</div>
+<div id="legend">
+  <div class="lgd"><div class="lgd-dot" style="background:#888780"></div>Root/Torso</div>
+  <div class="lgd"><div class="lgd-dot" style="background:#EF9F27"></div>Head/Neck</div>
+  <div class="lgd"><div class="lgd-dot" style="background:#639922"></div>Right side</div>
+  <div class="lgd"><div class="lgd-dot" style="background:#7F77DD"></div>Left side</div>
+  <div class="lgd"><div class="lgd-dot" style="background:#85B7EB"></div>Tray</div>
+  <div class="lgd"><div class="lgd-dot" style="background:#185FA5"></div>Cup</div>
+</div
