@@ -1,167 +1,258 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>OsteoWaiter: Pro Touch Rigging</title>
+    <style>
+        /* CSS Reset & Mobile Setup */
+        * { box-sizing: border-box; user-select: none; -webkit-user-select: none; touch-action: none; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #1a1a20; overflow: hidden; font-family: monospace; }
+        
+        #stage { width: 100%; height: 100%; position: relative; }
 
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-#ow{padding:1rem 0;user-select:none;-webkit-user-select:none}
-#st{
-  position:relative;width:620px;height:570px;
-  background:var(--color-background-secondary);
-  border:0.5px solid var(--color-border-tertiary);
-  border-radius:var(--border-radius-lg);
-  overflow:visible;margin:0 auto
-}
-.pv{
-  position:absolute;width:0;height:0;
-  overflow:visible;transform-origin:0 0;
-  transform:rotate(0deg)
-}
-.bv{
-  position:absolute;border-radius:6px;cursor:pointer;
-  border:1.5px solid transparent;
-  display:flex;align-items:center;justify-content:center
-}
-.bv:hover{border-color:rgba(255,255,255,.6)}
-.bv.sel{border-color:#fff;border-width:2.5px}
-.bv .lb{
-  font-size:9px;font-weight:500;
-  color:rgba(255,255,255,.92);
-  pointer-events:none;text-align:center;
-  line-height:1;white-space:nowrap
-}
-.jd{
-  position:absolute;width:7px;height:7px;
-  border-radius:50%;background:rgba(255,255,255,.3);
-  border:1.5px solid rgba(255,255,255,.55);
-  left:-3.5px;top:-3.5px;pointer-events:none
-}
-.ct{background:#888780}.ch{background:#EF9F27}
-.cr{background:#639922}.cl{background:#7F77DD}
-.ctr{background:#85B7EB}.ccu{background:#185FA5}
-#bar{
-  max-width:620px;margin:9px auto 0;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 6px;gap:8px
-}
-#hint{font-size:12px;color:var(--color-text-secondary)}
-#binfo{display:flex;align-items:center;gap:8px}
-#sname{font-size:13px;font-weight:500;color:var(--color-text-primary)}
-#sdeg{font-size:12px;color:var(--color-text-secondary);font-variant-numeric:tabular-nums;min-width:32px}
-#rst{
-  font-size:12px;cursor:pointer;
-  color:var(--color-text-secondary);
-  border:0.5px solid var(--color-border-secondary);
-  border-radius:var(--border-radius-md);
-  padding:3px 10px;background:none
-}
-#rst:hover{background:var(--color-background-tertiary)}
-#legend{
-  max-width:620px;margin:6px auto 0;
-  display:flex;gap:14px;padding:0 6px;flex-wrap:wrap
-}
-.lgd{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--color-text-secondary)}
-.lgd-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
-</style>
+        /* Bone Base Class */
+        .bone {
+            position: absolute;
+            border-radius: 20px;
+            cursor: grab;
+            transform-origin: top center;
+            border: 2px solid rgba(255,255,255,0.15);
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1), 0 4px 10px rgba(0,0,0,0.4);
+            display: flex;
+            justify-content: center;
+            /* Gradient for Claude's aesthetic feel */
+            background-image: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0.2) 100%);
+        }
+        
+        .bone:active { cursor: grabbing; border-color: rgba(255,255,255,0.9); z-index: 100; box-shadow: 0 0 15px rgba(255,255,255,0.3); }
 
-<h2 class="sr-only">OsteoWaiter — 2D hierarchical bone rigging system with 14 interactive bones using forward kinematics</h2>
+        /* Joint Hinge Visual */
+        .bone::before {
+            content: '';
+            position: absolute;
+            top: 4px;
+            width: 10px;
+            height: 10px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 50%;
+            pointer-events: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
 
-<div id="ow">
-<div id="st">
+        /* Pivot Point Tracker (Invisible) */
+        .pivot {
+            position: absolute;
+            width: 0;
+            height: 0;
+            pointer-events: none;
+            /* Default Pivot */
+            top: 0; left: 50%;
+        }
 
-<div class="pv" id="pp" data-n="Pelvis" style="left:260px;top:295px">
-  <div class="bv ct" data-p="pp" style="left:-42px;top:-18px;width:84px;height:36px;border-radius:10px"><span class="lb">Pelvis</span></div>
-  <div class="jd"></div>
+        /* Labels */
+        .label {
+            position: absolute;
+            top: 20px;
+            font-size: 10px;
+            color: rgba(255,255,255,0.7);
+            pointer-events: none;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
 
-  <div class="pv" id="pt" data-n="Torso" style="left:0;top:-18px">
-    <div class="bv ct" data-p="pt" style="left:-23px;top:-132px;width:46px;height:132px"><span class="lb">Torso</span></div>
-    <div class="jd"></div>
+        /* Hierarchy Logic */
+        .child-bone {
+            left: 50%;
+            transform: translateX(-50%) rotate(0deg);
+        }
 
-    <div class="pv" id="pnk" data-n="Neck" style="left:0;top:-132px">
-      <div class="bv ch" data-p="pnk" style="left:-15px;top:-42px;width:30px;height:42px"><span class="lb">Neck</span></div>
-      <div class="jd"></div>
-      <div class="pv" id="phd" data-n="Head" style="left:0;top:-42px">
-        <div class="bv ch" data-p="phd" style="left:-30px;top:-60px;width:60px;height:60px;border-radius:50%"><span class="lb">Head</span></div>
-        <div class="jd"></div>
-      </div>
-    </div>
+        /* Custom Dimensions & Colors */
+        #pelvis { width: 90px; height: 40px; background-color: #4a4e69; top: 40%; left: 50%; transform: translateX(-50%); border-radius: 12px; }
+        #pelvis::before { display: none; }
 
-    <div class="pv" id="pru" data-n="R.Upper Arm" style="left:23px;top:-118px">
-      <div class="bv cr" data-p="pru" style="left:0;top:-10px;width:72px;height:20px"><span class="lb">R.Arm</span></div>
-      <div class="jd"></div>
-      <div class="pv" id="prl" data-n="R.Lower Arm" style="left:72px;top:0">
-        <div class="bv cr" data-p="prl" style="left:0;top:-8px;width:62px;height:16px"><span class="lb">R.Forearm</span></div>
-        <div class="jd"></div>
-        <div class="pv" id="prh" data-n="R.Hand" style="left:62px;top:0">
-          <div class="bv cr" data-p="prh" style="left:-3px;top:-24px;width:30px;height:48px;border-radius:7px"><span class="lb">R.Hand</span></div>
-          <div class="jd"></div>
-          <div class="pv" id="pry" data-n="Tray" style="left:28px;top:-10px">
-            <div class="bv ctr" data-p="pry" style="left:-34px;top:-11px;width:68px;height:11px;border-radius:3px"><span class="lb" style="font-size:8px">Tray</span></div>
-            <div class="jd"></div>
-            <div class="pv" id="pcu" data-n="Cup" style="left:0;top:-11px">
-              <div class="bv ccu" data-p="pcu" style="left:-9px;top:-28px;width:18px;height:28px;border-radius:3px 3px 7px 7px"><span class="lb" style="font-size:8px">Cup</span></div>
-              <div class="jd"></div>
+        #torso { width: 70px; height: 110px; background-color: #22223b; bottom: 100%; top: auto; left: 50%; transform-origin: bottom center; }
+        #torso::before { bottom: 4px; top: auto; }
+        #torso > .pivot { top: 100%; left: 50%; } /* Override Pivot for Torso */
+        
+        #neck { width: 30px; height: 40px; background-color: #c9ada7; top: -35px; }
+        #head { width: 60px; height: 70px; background-color: #f2e9e4; top: -65px; border-radius: 35px; }
+
+        /* RIGHT ARM */
+        .r-arm { background-color: #2a9d8f; }
+        #r-upper-arm { width: 26px; height: 80px; top: 10px; left: 100%; transform: translateX(-20%) rotate(0deg); }
+        #r-lower-arm { width: 22px; height: 70px; top: calc(100% - 10px); }
+        #r-hand { width: 35px; height: 40px; top: calc(100% - 10px); background-color: #e9c46a; }
+
+        /* LEFT ARM */
+        .l-arm { background-color: #6a4c93; }
+        #l-upper-arm { width: 26px; height: 80px; top: 10px; left: 0%; transform: translateX(-80%) rotate(0deg); z-index: -1; }
+        #l-lower-arm { width: 22px; height: 70px; top: calc(100% - 10px); }
+        #l-hand { width: 35px; height: 40px; top: calc(100% - 10px); background-color: #b5838d; }
+
+        /* RIGHT LEG */
+        .r-leg { background-color: #e76f51; }
+        #r-upper-leg { width: 30px; height: 90px; top: calc(100% - 10px); left: 70%; }
+        #r-lower-leg { width: 26px; height: 80px; top: calc(100% - 10px); }
+        #r-foot { width: 50px; height: 25px; top: calc(100% - 5px); border-radius: 10px; transform-origin: 20% 50%; transform: translateX(-20%) rotate(0deg); }
+        #r-foot > .pivot { top: 50%; left: 20%; }
+
+        /* LEFT LEG */
+        .l-leg { background-color: #1982c4; }
+        #l-upper-leg { width: 30px; height: 90px; top: calc(100% - 10px); left: 30%; z-index: -1; }
+        #l-lower-leg { width: 26px; height: 80px; top: calc(100% - 10px); }
+        #l-foot { width: 50px; height: 25px; top: calc(100% - 5px); border-radius: 10px; transform-origin: 20% 50%; transform: translateX(-20%) rotate(0deg); }
+        #l-foot > .pivot { top: 50%; left: 20%; }
+
+        /* PROPS */
+        #tray { width: 120px; height: 8px; background-color: #ffffff; top: 80%; left: 50%; transform-origin: center center; transform: translateX(-50%) rotate(0deg); border-radius: 4px; }
+        #tray > .pivot { top: 50%; left: 50%; }
+        #cup { width: 25px; height: 40px; background-color: #ef233c; bottom: 100%; top: auto; left: 50%; transform: translateX(-50%); border-radius: 2px 2px 10px 10px; }
+        
+        #ui-hint { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 20px; color: white; font-size: 14px; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div id="ui-hint">اسحب أي طرف للتدوير بدقة | اسحب الحوض لتحريك المجسم</div>
+
+<div id="stage">
+    <div id="pelvis" class="bone">
+        <span class="label">PELVIS</span>
+        
+        <div id="torso" class="bone child-bone">
+            <span class="label">TORSO</span>
+            
+            <div id="neck" class="bone child-bone">
+                <div id="head" class="bone child-bone"></div>
             </div>
-          </div>
+
+            <div id="r-upper-arm" class="bone r-arm child-bone">
+                <div id="r-lower-arm" class="bone r-arm child-bone">
+                    <div id="r-hand" class="bone child-bone">
+                        <div id="tray" class="bone child-bone">
+                            <div id="cup" class="bone child-bone"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="l-upper-arm" class="bone l-arm child-bone">
+                <div id="l-lower-arm" class="bone l-arm child-bone">
+                    <div id="l-hand" class="bone child-bone"></div>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
 
-    <div class="pv" id="plu" data-n="L.Upper Arm" style="left:-23px;top:-118px">
-      <div class="bv cl" data-p="plu" style="left:-72px;top:-10px;width:72px;height:20px"><span class="lb">L.Arm</span></div>
-      <div class="jd"></div>
-      <div class="pv" id="pll" data-n="L.Lower Arm" style="left:-72px;top:0">
-        <div class="bv cl" data-p="pll" style="left:-62px;top:-8px;width:62px;height:16px"><span class="lb">L.Forearm</span></div>
-        <div class="jd"></div>
-        <div class="pv" id="plh" data-n="L.Hand" style="left:-62px;top:0">
-          <div class="bv cl" data-p="plh" style="left:-27px;top:-24px;width:30px;height:48px;border-radius:7px"><span class="lb">L.Hand</span></div>
-          <div class="jd"></div>
+        <div id="r-upper-leg" class="bone r-leg child-bone">
+            <div id="r-lower-leg" class="bone r-leg child-bone">
+                <div id="r-foot" class="bone r-leg child-bone"></div>
+            </div>
         </div>
-      </div>
+
+        <div id="l-upper-leg" class="bone l-leg child-bone">
+            <div id="l-lower-leg" class="bone l-leg child-bone">
+                <div id="l-foot" class="bone l-leg child-bone"></div>
+            </div>
+        </div>
     </div>
-
-  </div>
-
-  <div class="pv" id="prug" data-n="R.Upper Leg" style="left:22px;top:18px">
-    <div class="bv cr" data-p="prug" style="left:-13px;top:0;width:26px;height:90px"><span class="lb">R.Thigh</span></div>
-    <div class="jd"></div>
-    <div class="pv" id="prlg" data-n="R.Lower Leg" style="left:0;top:90px">
-      <div class="bv cr" data-p="prlg" style="left:-11px;top:0;width:22px;height:82px"><span class="lb">R.Calf</span></div>
-      <div class="jd"></div>
-      <div class="pv" id="prft" data-n="R.Foot" style="left:0;top:82px">
-        <div class="bv cr" data-p="prft" style="left:0;top:-5px;width:44px;height:20px;border-radius:5px"><span class="lb">R.Foot</span></div>
-        <div class="jd"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="pv" id="plug" data-n="L.Upper Leg" style="left:-22px;top:18px">
-    <div class="bv cl" data-p="plug" style="left:-13px;top:0;width:26px;height:90px"><span class="lb">L.Thigh</span></div>
-    <div class="jd"></div>
-    <div class="pv" id="pllg" data-n="L.Lower Leg" style="left:0;top:90px">
-      <div class="bv cl" data-p="pllg" style="left:-11px;top:0;width:22px;height:82px"><span class="lb">L.Calf</span></div>
-      <div class="jd"></div>
-      <div class="pv" id="plft" data-n="L.Foot" style="left:0;top:82px">
-        <div class="bv cl" data-p="plft" style="left:-44px;top:-5px;width:44px;height:20px;border-radius:5px"><span class="lb">L.Foot</span></div>
-        <div class="jd"></div>
-      </div>
-    </div>
-  </div>
-
-</div>
 </div>
 
-<div id="bar">
-  <span id="hint">Scroll wheel to rotate · Drag to pose · Drag pelvis to translate</span>
-  <div id="binfo">
-    <span id="sname">— click a bone —</span>
-    <span id="sdeg"></span>
-    <button id="rst">Reset pose</button>
-  </div>
-</div>
-<div id="legend">
-  <div class="lgd"><div class="lgd-dot" style="background:#888780"></div>Root/Torso</div>
-  <div class="lgd"><div class="lgd-dot" style="background:#EF9F27"></div>Head/Neck</div>
-  <div class="lgd"><div class="lgd-dot" style="background:#639922"></div>Right side</div>
-  <div class="lgd"><div class="lgd-dot" style="background:#7F77DD"></div>Left side</div>
-  <div class="lgd"><div class="lgd-dot" style="background:#85B7EB"></div>Tray</div>
-  <div class="lgd"><div class="lgd-dot" style="background:#185FA5"></div>Cup</div>
-</div
+<script>
+    const bones = document.querySelectorAll('.bone');
+    let activeBone = null;
+    let startX = 0, startY = 0;
+    let startRot = 0;
+    let startLeft = 0, startTop = 0;
+    let pivotX = 0, pivotY = 0;
+    let startAngle = 0;
+
+    bones.forEach(bone => {
+        // Inject physical pivot points into the DOM for exact trigonometric targeting
+        if (bone.id !== 'pelvis' && bone.id !== 'head' && bone.id !== 'cup') {
+            const pivot = document.createElement('div');
+            pivot.className = 'pivot';
+            bone.appendChild(pivot);
+        }
+
+        bone.addEventListener('pointerdown', (e) => {
+            e.stopPropagation();
+            activeBone = bone;
+            
+            if (bone.id === 'pelvis') {
+                startX = e.clientX;
+                startY = e.clientY;
+                startLeft = bone.offsetLeft;
+                startTop = bone.offsetTop;
+            } else {
+                startRot = parseFloat(bone.getAttribute('data-rot')) || 0;
+                
+                // Get Real-world coordinates of the Pivot point
+                const pivotEl = bone.querySelector('.pivot');
+                if (pivotEl) {
+                    const rect = pivotEl.getBoundingClientRect();
+                    pivotX = rect.left;
+                    pivotY = rect.top;
+                    
+                    // Calculate starting angle using Math.atan2 (y, x)
+                    startAngle = Math.atan2(e.clientY - pivotY, e.clientX - pivotX) * (180 / Math.PI);
+                }
+            }
+            
+            // Lock pointer to bone to prevent drops during fast dragging
+            bone.setPointerCapture(e.pointerId);
+        });
+
+        bone.addEventListener('pointermove', (e) => {
+            if (activeBone !== bone) return;
+            e.stopPropagation();
+
+            if (bone.id === 'pelvis') {
+                let dx = e.clientX - startX;
+                let dy = e.clientY - startY;
+                bone.style.left = (startLeft + dx) + 'px';
+                bone.style.top = (startTop + dy) + 'px';
+            } else {
+                // Prevent jittering if touching exactly on the pivot point
+                const dist = Math.hypot(e.clientY - pivotY, e.clientX - pivotX);
+                if (dist < 5) return; 
+
+                const currentAngle = Math.atan2(e.clientY - pivotY, e.clientX - pivotX) * (180 / Math.PI);
+                let deltaAngle = currentAngle - startAngle;
+
+                // Normalize angle delta to prevent jumping when crossing the 180° / -180° threshold
+                if (deltaAngle > 180) deltaAngle -= 360;
+                if (deltaAngle < -180) deltaAngle += 360;
+
+                let newRot = startRot - deltaAngle;
+                
+                // Maintain correct translate offsets for specific joints
+                let transformBase = 'translateX(-50%)';
+                if (bone.id === 'r-upper-arm' || bone.id === 'r-foot' || bone.id === 'l-foot') {
+                    transformBase = 'translateX(-20%)';
+                } else if (bone.id === 'l-upper-arm') {
+                    transformBase = 'translateX(-80%)';
+                }
+
+                // Apply new transform
+                bone.style.transform = `${transformBase} rotate(${newRot}deg)`;
+                
+                // Store rotation state for subsequent interactions
+                bone.setAttribute('data-rot', newRot);
+            }
+        });
+
+        const releaseBone = (e) => {
+            if(activeBone === bone) {
+                activeBone = null;
+                bone.releasePointerCapture(e.pointerId);
+            }
+        };
+
+        bone.addEventListener('pointerup', releaseBone);
+        bone.addEventListener('pointercancel', releaseBone);
+    });
+</script>
+
+</body>
+</html>
