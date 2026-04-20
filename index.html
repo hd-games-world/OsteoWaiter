@@ -7,7 +7,7 @@
     <style>
         /* CSS Reset & Mobile Setup */
         * { box-sizing: border-box; user-select: none; -webkit-user-select: none; touch-action: none; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #1a1a20; overflow: hidden; font-family: monospace; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #676783; overflow: hidden; font-family: monospace; }
         
         #stage { width: 100%; height: 100%; position: relative; }
 
@@ -17,8 +17,6 @@
             border-radius: 20px;
             cursor: grab;
             transform-origin: top center;
-            border: 2px solid rgba(255,255,255,0.15);
-            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1), 0 4px 10px rgba(0,0,0,0.4);
             display: flex;
             justify-content: center;
             /* Gradient for Claude's aesthetic feel */
@@ -68,38 +66,34 @@
         }
 
         /* Custom Dimensions & Colors */
-        #pelvis { width: 90px; height: 40px; background-color: #4a4e69; top: 40%; left: 50%; transform: translateX(-50%); border-radius: 12px; background-image: url('assets/pelvis.png'); background-size: cover; background-position: center; }
+        #pelvis { width: 70px; height: 30px; top: 50%; left: 50%; transform: translateX(-50%); background-image: url('assets/pelvis.png'); background-size: cover; background-position: center; }
         #pelvis::before { display: none; }
 
-        #torso { width: 70px; height: 110px; background-color: #22223b; bottom: 100%; top: auto; left: 50%; transform-origin: bottom center; background-image: url('assets/torso.png'); background-size: cover; background-position: center; }
+        #torso { width: 87px; height: 110px; bottom: 100%; top: auto; left: 50%; transform-origin: bottom center; background-image: url('assets/torso.png'); background-size: cover; background-position: center; }
         #torso::before { bottom: 4px; top: auto; }
         #torso > .pivot { top: 100%; left: 50%; } /* Override Pivot for Torso */
         
-        #neck { width: 30px; height: 40px; background-color: #c9ada7; top: -35px; background-image: url('assets/neck.png'); background-size: cover; background-position: center; }
-        #head { width: 60px; height: 70px; background-color: #f2e9e4; top: -65px; border-radius: 35px; background-image: url('assets/head.png'); background-size: cover; background-position: center; }
+        #neck { width: 31px; height: 26px; top: -8px; background-image: url('assets/neck.png'); background-size: cover; background-position: center; }
+        #head { width: 60px; height: 70px; top: -55px; background-image: url('assets/head.png'); background-size: cover; background-position: center; }
 
         /* RIGHT ARM */
-        .r-arm { background-color: #2a9d8f; }
-        #r-upper-arm { width: 26px; height: 80px; top: 10px; left: 100%; transform: translateX(-20%) rotate(0deg); background-image: url('assets/r-upper-arm.png'); background-size: cover; background-position: center; }
-        #r-lower-arm { width: 22px; height: 70px; top: calc(100% - 10px); background-image: url('assets/r-lower-arm.png'); background-size: cover; background-position: center; }
-        #r-hand { width: 35px; height: 40px; top: calc(100% - 10px); background-color: #e9c46a; background-image: url('assets/r-hand.png'); background-size: cover; background-position: center; }
+        #r-upper-arm { width: 26px; height: 80px; top: 18px; left: 100%; transform: translateX(-70%) rotate(-10deg); background-image: url('assets/r-upper-arm.png'); background-size: cover; background-position: center; }
+        #r-lower-arm { width: 22px; height: 70px; top: calc(100% - 10px);  background-image: url('assets/r-lower-arm.png'); background-size: cover; background-position: center; rotate: 10deg; }
+        #r-hand { width: 34px; margin-left: -3px; height: 45px; top: calc(100% - 4px); background-image: url('assets/r-hand.png'); background-size: cover; background-position: center; }
 
         /* LEFT ARM */
-        .l-arm { background-color: #6a4c93; }
-        #l-upper-arm { width: 26px; height: 80px; top: 10px; left: 0%; transform: translateX(-80%) rotate(0deg); z-index: -1; background-image: url('assets/l-upper-arm.png'); background-size: cover; background-position: center; }
-        #l-lower-arm { width: 22px; height: 70px; top: calc(100% - 10px); background-image: url('assets/l-lower-arm.png'); background-size: cover; background-position: center; }
-        #l-hand { width: 35px; height: 40px; top: calc(100% - 10px); background-color: #b5838d; background-image: url('assets/l-hand.png'); background-size: cover; background-position: center; }
+        #l-upper-arm { width: 26px; height: 80px; top: 18px; left: 0%; transform: translateX(-35%) rotate(10deg); z-index: -1; background-image: url('assets/l-upper-arm.png'); background-size: cover; background-position: center; }
+        #l-lower-arm { width: 22px; height: 70px; top: calc(100% - 10px); background-image: url('assets/l-lower-arm.png'); background-size: cover; background-position: center; rotate: -10deg; }
+        #l-hand { width: 34px; margin-left: 3px; height: 45px; top: calc(100% - 4px); background-image: url('assets/l-hand.png'); background-size: cover; background-position: center; }
 
         /* RIGHT LEG */
-        .r-leg { background-color: #e76f51; }
-        #r-upper-leg { width: 30px; height: 90px; top: calc(100% - 10px); left: 70%; background-image: url('assets/r-upper-leg.png'); background-size: cover; background-position: center; }
+        #r-upper-leg { width: 30px; height: 90px; top: calc(100% - 10px); left: 75%; background-image: url('assets/r-upper-leg.png'); background-size: cover; background-position: center; }
         #r-lower-leg { width: 26px; height: 80px; top: calc(100% - 10px); background-image: url('assets/r-lower-leg.png'); background-size: cover; background-position: center; }
         #r-foot { width: 50px; height: 25px; top: calc(100% - 5px); border-radius: 10px; transform-origin: 20% 50%; transform: translateX(-20%) rotate(0deg); background-image: url('assets/r-foot.png'); background-size: cover; background-position: center; }
         #r-foot > .pivot { top: 50%; left: 20%; }
 
         /* LEFT LEG */
-        .l-leg { background-color: #1982c4; }
-        #l-upper-leg { width: 30px; height: 90px; top: calc(100% - 10px); left: 30%; z-index: -1; background-image: url('assets/l-upper-leg.png'); background-size: cover; background-position: center; }
+        #l-upper-leg { width: 30px; height: 90px; top: calc(100% - 10px); left: 25%; z-index: -1; background-image: url('assets/l-upper-leg.png'); background-size: cover; background-position: center; }
         #l-lower-leg { width: 26px; height: 80px; top: calc(100% - 10px); background-image: url('assets/l-lower-leg.png'); background-size: cover; background-position: center; }
         #l-foot { width: 50px; height: 25px; top: calc(100% - 5px); border-radius: 10px; transform-origin: 20% 50%; transform: translateX(-20%) rotate(0deg); background-image: url('assets/l-foot.png'); background-size: cover; background-position: center; }
         #l-foot > .pivot { top: 50%; left: 20%; }
@@ -118,10 +112,8 @@
 
 <div id="stage">
     <div id="pelvis" class="bone">
-        <span class="label">PELVIS</span>
         
         <div id="torso" class="bone child-bone">
-            <span class="label">TORSO</span>
             
             <div id="neck" class="bone child-bone">
                 <div id="head" class="bone child-bone"></div>
@@ -130,9 +122,9 @@
             <div id="r-upper-arm" class="bone r-arm child-bone">
                 <div id="r-lower-arm" class="bone r-arm child-bone">
                     <div id="r-hand" class="bone child-bone">
-                        <div id="tray" class="bone child-bone">
+<!--                         <div id="tray" class="bone child-bone">
                             <div id="cup" class="bone child-bone"></div>
-                        </div>
+                        </div> -->
                     </div>
                 </div>
             </div>

@@ -3,3 +3,4 @@ gemini
 claude
 deepseek
 .DS_Store
+.vscode/settings.json
